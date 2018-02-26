@@ -28,17 +28,13 @@ logging.basicConfig(level=logging.INFO,
 
 # #############################################################################
 # Load some categories from the training set 
-categories = [
-    'alt.atheism',
-    'talk.religion.misc',
-]
 # Uncomment the following to do the analysis on all the categories
-#categories = None
-
+# categories = None
+data = fetch_20newsgroups(subset='train')
 print("Loading 20 newsgroups dataset for categories:")
-print(categories)
+print(data.target_names)
 
-data = fetch_20newsgroups(subset='train', categories=categories)
+
 print("%d documents" % len(data.filenames))
 print("%d categories" % len(data.target_names))
 print()
@@ -47,24 +43,24 @@ print()
 # Define a pipeline combining a text feature extractor with a simple
 # classifier
 pipeline = Pipeline([
-    ('vect', CountVectorizer()),  #http://scikit-learn.org/stable/modules/feature_extraction.html
-    #('tfidf', TfidfTransformer()), #ignore for now
-    ('clf', SGDClassifier(loss='log')),  #let's use logistic regression
+    ('vect', CountVectorizer()),  # http://scikit-learn.org/stable/modules/feature_extraction.html
+    ('tfidf', TfidfTransformer()),  # ignore for now
+    ('clf', SGDClassifier(loss='log')),  # let's use logistic regression
 ])
 
 # uncommenting more parameters will give better exploring power but will
 # increase processing time in a combinatorial way
-parameters = { #listed in the form of "step__parameter", e.g, clf__penalty
-    #'vect__max_df': (0.5, 0.75, 1.0),
+parameters = {  # listed in the form of "step__parameter", e.g, clf__penalty
+    # 'vect__max_df': (0.5, 0.75, 1.0),
     'vect__max_features': (None, 500, 5000, 10000, 50000),
     'vect__ngram_range': ((1, 1), (1, 2)),  # unigrams (single words) or bigrams (or sequence of words of length 2)
-    #'tfidf__use_idf': (True, False),
-    #'tfidf__norm': ('l1', 'l2'),
+    'tfidf__use_idf': (True, False),
+    'tfidf__norm': ('l1', 'l2'),
     'clf__alpha': (0.00001, 0.000001),
     'clf__penalty': ('l1', 'l2', 'elasticnet'),
-    #'clf__penalty': ('l1', 'l2', 'elasticnet'),
-    #'clf__loss': ('log', 'hinge'),  #hinge linear SVM
-    #'clf__n_iter': (10, 50, 80),
+    # 'clf__penalty': ('l1', 'l2', 'elasticnet'),
+    'clf__loss': ('log', 'hinge'),  # hinge linear SVM
+    # 'clf__n_iter': (10, 50, 80),
 }
 
 if __name__ == "__main__":
@@ -77,7 +73,7 @@ if __name__ == "__main__":
     #
     # By default, the GridSearchCV uses a 3-fold cross-validation. However, if it 
     #            detects that a classifier is passed, rather than a regressor, it uses a stratified 3-fold.
-    kfold = KFold(n_splits=5, random_state=7)
+    kfold = KFold(n_splits=3, random_state=7)
     grid_search = GridSearchCV(pipeline, parameters, cv=kfold, n_jobs=-1, verbose=1)
 
     print("Performing grid search...")
@@ -88,10 +84,10 @@ if __name__ == "__main__":
     grid_search.fit(data.data, data.target)
     print("done in %0.3fs" % (time() - t0))
     print()
-    #print("grid_search.cv_results_", grid_search.cv_results_)
-    #estimator : estimator object. This is assumed to implement the scikit-learn estimator interface.  
+    # print("grid_search.cv_results_", grid_search.cv_results_)
+    # estimator : estimator object. This is assumed to implement the scikit-learn estimator interface.  
     #            Either estimator needs to provide a score function, or scoring must be passed.
-    #Accuracy is the default for classification; feel free to change this to precision, recall, fbeta
+    # Accuracy is the default for classification; feel free to change this to precision, recall, fbeta
     print("Best score: %0.3f" % grid_search.best_score_)
     print("Best parameters set:")
     best_parameters = grid_search.best_estimator_.get_params()
